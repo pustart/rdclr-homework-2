@@ -115,8 +115,6 @@ describe('Game module', () => {
       )
       .build();
 
-    console.log(game.getState());
-
     const userWon = game.isWinner(USER_NAME);
     expect(userWon).toEqual(true);
   });
