@@ -62,3 +62,36 @@ body {
   font-weight: 400;
   line-height: normal;
 }
+
+table {
+  margin: 80px auto 0;
+  font-family: sans-serif;
+}
+
+td {
+  width: 80px;
+  height: 80px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+td:hover {
+  background: rgba(0, 0, 0, .05);
+}
+
+table,
+tr,
+td {
+  border-collapse: collapse
+}
+
+#status {
+  padding: 30px 0 5px;
+  text-transform: capitalize;
+  max-width: 200px;
+  margin: auto;
+}
+
+button {
+  cursor: pointer;
+}
