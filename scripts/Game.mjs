@@ -27,9 +27,26 @@ export default class Game {
     return this._board;
   }
 
+  getSize() {
+    return this._fieldSize;
+  }
+
   getMoveHistory() {
     return this._history;
   }
+
+  clear() {
+    this._history = [];
+    this._board = this._cloneBoardState(BOARD_INITIAL_STATE);
+  }
+
+  checkGame() {
+    if (this.isWinner(this._userName)) return `${this._userName} won!`;
+    if (this.isWinner(this._botName)) return `${this._botName} won!`;
+    if (this._getFreeCellsCount() === 0) return `nobody won :–(`;
+    return "continue";
+  }
+
 
   acceptUserMove(x, y) {
     if (!this._isCellFree(x, y)) {
