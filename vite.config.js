@@ -2,9 +2,10 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    outDir: 'dist',
+    minify: false,
+    outDir: './',
     rollupOptions: {
-      input: './scripts/index.js', // Ваша точка входа
+      input: './scripts/main.js',
       output: {
         entryFileNames: 'scripts/bundle.js',
       },
