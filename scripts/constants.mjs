@@ -1,5 +1,5 @@
-export const USER_NAME = "user";
-export const BOT_NAME = "computer";
+export const FIRST_PLAYER_NAME = "First player";
+export const SECOND_PLAYER_NAME = "Second player";
 
 export const CROSS_SYMBOL = "×";
 export const ZERO_SYMBOL = "o";
