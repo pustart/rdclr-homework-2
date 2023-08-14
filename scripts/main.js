@@ -8,15 +8,16 @@ import {
   ZERO_SYMBOL,
 } from "./constants.mjs";
 
-
-const player1Name = prompt("Enter Player 1 name:") || FIRST_PLAYER_NAME;
-const player2Name = prompt("Enter Player 2 name:") || SECOND_PLAYER_NAME;
-const firstTurn = prompt("Enter name of player with first turn:") || FIRST_PLAYER_NAME;
+const player1Name = prompt("Enter Player 1 name: ") || FIRST_PLAYER_NAME;
+const player2Name = prompt("Enter Player 2 name: ") || SECOND_PLAYER_NAME;
 
 let player1 = new Player(player1Name, CROSS_SYMBOL);
 let player2 = new Player(player2Name, ZERO_SYMBOL);
 
-if (firstTurn === player2Name) {
+if (confirm(`${player1Name} will go first. `)) {
+  player1 = new Player(player1Name, CROSS_SYMBOL);
+  player2 = new Player(player2Name, ZERO_SYMBOL);
+} else if (confirm(`${player2Name} will go first. `)) {
   player1 = new Player(player2Name, CROSS_SYMBOL);
   player2 = new Player(player1Name, ZERO_SYMBOL);
 }
