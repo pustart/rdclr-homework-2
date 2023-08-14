@@ -1,20 +1,23 @@
 import { describe, test, expect, beforeEach, jest } from "@jest/globals";
 import Game from "../scripts/Game.mjs";
-import GameBuilder from "./GameBuilder.mjs";
 import {
   BOARD_INITIAL_STATE,
   CROSS_SYMBOL,
   TAKEN_CELL_ERROR,
-  FULL_BOARD_ERROR,
   ZERO_SYMBOL,
-  USER_NAME,
-  BOT_NAME,
+  FIRST_PLAYER_NAME,
+  SECOND_PLAYER_NAME,
 } from "../scripts/constants.mjs";
+import Player from '../scripts/Player.mjs';
 
 let game;
+let player1;
+let player2;
 
 beforeEach(() => {
-  game = new Game();
+  player1 = new Player(FIRST_PLAYER_NAME, CROSS_SYMBOL);
+  player2 = new Player(SECOND_PLAYER_NAME, ZERO_SYMBOL);
+  game = new Game(player1, player2);
 });
 
 describe('Game module', () => {
@@ -44,115 +47,72 @@ describe('Game module', () => {
     expect(func).toThrow(TAKEN_CELL_ERROR);
   });
 
-  test('Game saves user\'s move in history', () => {
+  test('Game saves first player\'s move in history', () => {
     const x = 1;
     const y = 1;
 
     game.acceptUserMove(x, y);
     const history = game.getMoveHistory();
 
-    expect(history).toEqual([{ turn: USER_NAME, x, y }]);
+    expect(history).toEqual([{ turn: FIRST_PLAYER_NAME, x, y }]);
   });
 
-  test('Game saves computer\'s move in history', () => {
-    const mock = jest.spyOn(global.Math, 'random').mockReturnValue(0.5);
-
-    game.createBotMove();
-    const history = game.getMoveHistory();
-
-    expect(history).toEqual([{ turn: BOT_NAME, x: 1, y: 1 }]);
-    mock.mockRestore();
-  });
-
-  test("Game saves 1 user's move and 1 computer's move in history", () => {
+  test("Game saves both players moves in history", () => {
     const x = 1;
     const y = 1;
 
+    game.acceptUserMove(2, 2);
     game.acceptUserMove(x, y);
-    game.createBotMove();
+
     const history = game.getMoveHistory();
 
-    expect(history.length).toEqual(2);
-    expect(history[0].turn).toEqual(USER_NAME);
-    expect(history[1].turn).toEqual(BOT_NAME);
+    expect(history).toEqual([{ turn: FIRST_PLAYER_NAME, x: 2, y: 2 }, { turn: SECOND_PLAYER_NAME, x, y }]);
   });
 
-  test('Computer moves in randomly chosen cell', () => {
-    const mock = jest.spyOn(global.Math, 'random').mockReturnValue(0.5);
-
-    game.createBotMove();
-    const board = game.getState();
-
-    expect(board[1][1]).toEqual(ZERO_SYMBOL);
-    mock.mockRestore();
+  it('Should handle game continuation', () => {
+    expect(game.checkGame()).toEqual('continue');
+    game.acceptUserMove(0, 0);
+    expect(game.checkGame()).toEqual('continue');
   });
 
-  test('Computer moves in cell that is not taken', () => {
-    fillCells(game, { x: 2, y: 2 });
-
-    game.createBotMove();
-    const board = game.getState();
-
-    expect(count(board, CROSS_SYMBOL)).toBe(8);
-    expect(count(board, ZERO_SYMBOL)).toBe(1);
-    expect(board[2][2]).toEqual(ZERO_SYMBOL);
+  it('Checks if user won by horizontal', () => {
+    game.acceptUserMove(0, 0); // Player 1
+    game.acceptUserMove(1, 0); // Player 2
+    game.acceptUserMove(0, 1); // Player 1
+    game.acceptUserMove(1, 1); // Player 2
+    game.acceptUserMove(0, 2); // Player 1 (wins)
+    expect(game.checkGame()).toEqual(`${player1.getName()} won!`);
   });
 
-  test('If there are no free cells computer throws an exception', () => {
-    fillCells(game);
-
-    const func = game.createBotMove.bind(game);
-    expect(func).toThrow(FULL_BOARD_ERROR);
+  it('Checks if user won by vertical', () => {
+    game.acceptUserMove(0, 0); // Player 1
+    game.acceptUserMove(0, 1); // Player 2
+    game.acceptUserMove(1, 0); // Player 1
+    game.acceptUserMove(1, 1); // Player 2
+    game.acceptUserMove(2, 0); // Player 1 (wins)
+    expect(game.checkGame()).toEqual(`${player1.getName()} won!`);
   });
 
-  test('Checks if user won by horizontal', () => {
-    const game = new GameBuilder()
-      .withBoardState(
-        `
-        x x x
-        . . .
-        . . .`
-      )
-      .build();
-
-    const userWon = game.isWinner(USER_NAME);
-    expect(userWon).toEqual(true);
+  it('Checks if user won by a diagonal', () => {
+    game.acceptUserMove(0, 0); // Player 1
+    game.acceptUserMove(0, 1); // Player 2
+    game.acceptUserMove(1, 1); // Player 1
+    game.acceptUserMove(1, 0); // Player 2
+    game.acceptUserMove(2, 2); // Player 1 (wins)
+    expect(game.checkGame()).toEqual(`${player1.getName()} won!`);
   });
 
-  test('Checks if user won by vertical', () => {
-    const game = new GameBuilder()
-      .withBoardState(`
-      x . .
-      x . .
-      x . .`)
-      .build();
-
-    const userWon = game.isWinner(USER_NAME);
-    expect(userWon).toEqual(true);
-  });
-
-  test('Checks if user won by main diagonal', () => {
-    const game = new GameBuilder()
-      .withBoardState(`
-      x . .
-      . x .
-      . . x`)
-      .build();
-
-    const userWon = game.isWinner(USER_NAME);
-    expect(userWon).toEqual(true);
-  });
-
-  test('Checks if user won by reversed diagonal', () => {
-    const game = new GameBuilder()
-      .withBoardState(`
-      . . x
-      . x .
-      x . .`)
-      .build();
-
-    const userWon = game.isWinner(USER_NAME);
-    expect(userWon).toEqual(true);
+  it('Should detect a draw', () => {
+    game.acceptUserMove(0, 0); // Player 1
+    game.acceptUserMove(0, 1); // Player 2
+    game.acceptUserMove(0, 2); // Player 1
+    game.acceptUserMove(1, 2); // Player 2
+    game.acceptUserMove(1, 0); // Player 1
+    game.acceptUserMove(2, 0); // Player 2
+    game.acceptUserMove(1, 1); // Player 1
+    game.acceptUserMove(2, 2); // Player 2
+    game.acceptUserMove(2, 1); // Player 1
+    expect(game.checkGame()).toEqual('Nobody won');
   });
 });
 
