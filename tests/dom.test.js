@@ -2,6 +2,13 @@ import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globa
 import jsdom from 'jsdom';
 import Game from "../scripts/Game.mjs";
 import DomController from "../scripts/Dom.controller.mjs";
+import {
+  CROSS_SYMBOL,
+  ZERO_SYMBOL,
+  FIRST_PLAYER_NAME,
+  SECOND_PLAYER_NAME,
+} from "../scripts/constants.mjs";
+import Player from '../scripts/Player.mjs';
 
 const { JSDOM } = jsdom;
 const dom = new JSDOM('<html><body id="root"></body></html>');
@@ -9,7 +16,10 @@ const dom = new JSDOM('<html><body id="root"></body></html>');
 global.window = dom.window;
 global.document = dom.window.document;
 
-const createGame = (board) => new Game(board);
+const player1 = new Player(FIRST_PLAYER_NAME, CROSS_SYMBOL);
+const player2 = new Player(SECOND_PLAYER_NAME, ZERO_SYMBOL);
+
+const createGame = (board) => new Game(player1, player2, board);
 
 const createInstance = (game = {}) => {
   return new DomController({
@@ -94,6 +104,7 @@ describe('DOM controller', () => {
 
   test('Redraws table on cell click', () => {
     const game = createGame();
+    console.log(game.getPlayers())
     const domController = createInstance(game);
 
     domController.init();
@@ -101,17 +112,6 @@ describe('DOM controller', () => {
     const text = document.querySelector('table td').textContent;
 
     expect(text).toEqual('×');
-  });
-
-  test('Makes computer move right after users move', () => {
-    const game = createGame();
-    const domController = createInstance(game);
-
-    domController.init();
-    document.querySelector('table td').click();
-    const text = document.querySelector('table').textContent;
-
-    expect(text.indexOf('o') > -1).toBe(true);
   });
 
   test('Creates status text below table if someone wins', () => {
@@ -127,7 +127,7 @@ describe('DOM controller', () => {
     document.querySelector('table tr:nth-child(1) td:nth-child(3)').click();
 
     const status = document.querySelector('#status');
-    expect(status.textContent).toEqual('user won!');
+    expect(status.textContent).toEqual(`${player1.getName()} won!`);
   });
 
   test("Creates clear button if someone wins", () => {
