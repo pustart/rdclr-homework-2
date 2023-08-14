@@ -1,5 +1,5 @@
-const USER_NAME = "user";
-const BOT_NAME = "computer";
+const FIRST_PLAYER_NAME = "First player";
+const SECOND_PLAYER_NAME = "Second player";
 const CROSS_SYMBOL = "×";
 const ZERO_SYMBOL = "o";
 const DEFAULT_FIELD_SIZE = 3;
@@ -9,7 +9,6 @@ const BOARD_INITIAL_STATE = [
   ["", "", ""]
 ];
 const TAKEN_CELL_ERROR = "Cell is already taken";
-const FULL_BOARD_ERROR = "No cells available";
 class DomController {
   constructor({ root, game: game2 }) {
     this.active = true;
@@ -46,7 +45,6 @@ class DomController {
       const state = this.game.checkGame();
       if (!this._checkContinue())
         return;
-      this._makeBotMove();
       this._checkContinue();
     } catch (err) {
       window.alert(err.message);
@@ -61,6 +59,9 @@ class DomController {
         text: state,
         id: "status"
       });
+      this.game.clear();
+      this.rootNode.innerHTML = "";
+      this.active = true;
       const clearButton = this._createNode("button", {
         text: "Play again"
       });
@@ -85,10 +86,6 @@ class DomController {
     this.game.acceptUserMove(row, col);
     this._redraw();
   }
-  _makeBotMove() {
-    this.game.createBotMove();
-    this._redraw();
-  }
   _redraw() {
     const board = this.game.getState();
     const table = this.rootNode.querySelector("table");
@@ -102,14 +99,21 @@ class DomController {
   }
 }
 class Game {
-  constructor(board, fieldSize) {
+  constructor(firstPlayer, secondPlayer, board, fieldSize) {
     this._board = board || this._cloneBoardState(BOARD_INITIAL_STATE);
     this._fieldSize = fieldSize || DEFAULT_FIELD_SIZE;
-    this._userMoveSymbol = CROSS_SYMBOL;
-    this._botMoveSymbol = ZERO_SYMBOL;
-    this._userName = USER_NAME;
-    this._botName = BOT_NAME;
+    this._crossSymbol = CROSS_SYMBOL;
+    this._zeroSymbol = ZERO_SYMBOL;
+    this._player1 = firstPlayer;
+    this._player2 = secondPlayer;
+    this._currPlayer = firstPlayer;
     this._history = [];
+  }
+  getCurrPlayer() {
+    return this._currPlayer;
+  }
+  getPlayers() {
+    return [this._player1, this._player2];
   }
   getState() {
     return this._board;
@@ -122,31 +126,25 @@ class Game {
   }
   clear() {
     this._history = [];
+    this._currPlayer = this._player1;
     this._board = this._cloneBoardState(BOARD_INITIAL_STATE);
   }
   checkGame() {
-    if (this.isWinner(this._userName))
-      return `${this._userName} won!`;
-    if (this.isWinner(this._botName))
-      return `${this._botName} won!`;
+    if (this.isWinner(this._player1.getName()))
+      return `${this._player1.getName()} won!`;
+    if (this.isWinner(this._player2.getName()))
+      return `${this._player2.getName()} won!`;
     if (this._getFreeCellsCount() === 0)
-      return `nobody won :–(`;
+      return `Nobody won`;
     return "continue";
   }
   acceptUserMove(x, y) {
     if (!this._isCellFree(x, y)) {
       return this._throwException(TAKEN_CELL_ERROR);
     }
-    this._updateHistory(this._userName, x, y);
-    this._updateBoard(x, y);
-  }
-  createBotMove() {
-    if (this._getFreeCellsCount() === 0) {
-      return this._throwException(FULL_BOARD_ERROR);
-    }
-    const [x, y] = this._getFreeRandomCoordinates();
-    this._updateHistory(this._botName, x, y);
-    this._updateBoard(x, y, this._botMoveSymbol);
+    this._updateHistory(this._currPlayer.getName(), x, y);
+    this._updateBoard(x, y, this._currPlayer.getSymbol());
+    this._switchPlayers();
   }
   isWinner(player) {
     const symbol = this._getSymbolForPlayer(player);
@@ -163,8 +161,15 @@ class Game {
     const diagonal = isEqual(0, 0) && isEqual(1, 1) && isEqual(2, 2) || isEqual(0, 2) && isEqual(1, 1) && isEqual(2, 0);
     return horizontal || vertical || diagonal || false;
   }
+  _switchPlayers() {
+    if (this._currPlayer === this._player1) {
+      this._currPlayer = this._player2;
+    } else {
+      this._currPlayer = this._player1;
+    }
+  }
   _getSymbolForPlayer(player) {
-    return player === this._userName ? this._userMoveSymbol : this._botMoveSymbol;
+    return player === this._player1.getName() ? this._crossSymbol : this._zeroSymbol;
   }
   _checkCellEqual(symbol) {
     return (i, j) => this._board[i][j] === symbol;
@@ -172,7 +177,7 @@ class Game {
   _updateHistory(turn, x, y) {
     this._history.push({ turn, x, y });
   }
-  _updateBoard(x, y, symbol = this._userMoveSymbol) {
+  _updateBoard(x, y, symbol = this._crossSymbol) {
     this._board[x][y] = symbol;
   }
   _cloneBoardState(board) {
@@ -203,7 +208,28 @@ class Game {
     throw new Error(msg);
   }
 }
-const game = new Game();
+class Player {
+  constructor(name, symbol) {
+    this._name = name;
+    this._symbol = symbol || CROSS_SYMBOL;
+  }
+  getName() {
+    return this._name;
+  }
+  getSymbol() {
+    return this._symbol;
+  }
+}
+const player1Name = prompt("Enter Player 1 name:") || FIRST_PLAYER_NAME;
+const player2Name = prompt("Enter Player 2 name:") || SECOND_PLAYER_NAME;
+const firstTurn = prompt("Enter name of player with first turn:") || FIRST_PLAYER_NAME;
+let player1 = new Player(player1Name, CROSS_SYMBOL);
+let player2 = new Player(player2Name, ZERO_SYMBOL);
+if (firstTurn === player2Name) {
+  player1 = new Player(player2Name, CROSS_SYMBOL);
+  player2 = new Player(player1Name, ZERO_SYMBOL);
+}
+const game = new Game(player1, player2);
 const dom = new DomController({
   root: "body",
   game

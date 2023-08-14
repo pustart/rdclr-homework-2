@@ -45,8 +45,6 @@ class DomController {
       const state = this.game.checkGame();
       if (!this._checkContinue()) return;
 
-      //todo change bot to second user
-      this._makeBotMove();
       this._checkContinue();
     } catch (err) {
       window.alert(err.message);
@@ -63,6 +61,10 @@ class DomController {
         text: state,
         id: "status",
       });
+
+      this.game.clear();
+      this.rootNode.innerHTML = "";
+      this.active = true;
 
       const clearButton = this._createNode("button", {
         text: "Play again",
@@ -90,11 +92,6 @@ class DomController {
 
   _makeUserMove(row, col) {
     this.game.acceptUserMove(row, col);
-    this._redraw();
-  }
-
-  _makeBotMove() {
-    this.game.createBotMove();
     this._redraw();
   }
 

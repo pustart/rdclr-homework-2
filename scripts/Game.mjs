@@ -4,23 +4,31 @@ import {
   TAKEN_CELL_ERROR,
   FULL_BOARD_ERROR,
   ZERO_SYMBOL,
-  USER_NAME,
-  BOT_NAME,
   DEFAULT_FIELD_SIZE,
 } from "./constants.mjs";
 
 export default class Game {
-  constructor(board, fieldSize) {
+  constructor(firstPlayer, secondPlayer, board, fieldSize) {
     this._board = board || this._cloneBoardState(BOARD_INITIAL_STATE);
     this._fieldSize = fieldSize || DEFAULT_FIELD_SIZE;
 
-    this._userMoveSymbol = CROSS_SYMBOL;
-    this._botMoveSymbol = ZERO_SYMBOL;
+    this._crossSymbol = CROSS_SYMBOL;
+    this._zeroSymbol = ZERO_SYMBOL;
 
-    this._userName = USER_NAME;
-    this._botName = BOT_NAME;
+    this._player1 = firstPlayer;
+    this._player2 = secondPlayer;
+
+    this._currPlayer = firstPlayer;
 
     this._history = [];
+  }
+
+  getCurrPlayer() {
+    return this._currPlayer;
+  }
+
+  getPlayers() {
+    return [this._player1, this._player2];
   }
 
   getState() {
@@ -37,34 +45,25 @@ export default class Game {
 
   clear() {
     this._history = [];
+    this._currPlayer = this._player1;
     this._board = this._cloneBoardState(BOARD_INITIAL_STATE);
   }
 
   checkGame() {
-    if (this.isWinner(this._userName)) return `${this._userName} won!`;
-    if (this.isWinner(this._botName)) return `${this._botName} won!`;
-    if (this._getFreeCellsCount() === 0) return `nobody won :–(`;
+    if (this.isWinner(this._player1.getName())) return `${this._player1.getName()} won!`;
+    if (this.isWinner(this._player2.getName())) return `${this._player2.getName()} won!`;
+    if (this._getFreeCellsCount() === 0) return `Nobody won`;
     return "continue";
   }
-
 
   acceptUserMove(x, y) {
     if (!this._isCellFree(x, y)) {
       return this._throwException(TAKEN_CELL_ERROR);
     }
 
-    this._updateHistory(this._userName, x, y);
-    this._updateBoard(x, y);
-  }
-
-  createBotMove() {
-    if (this._getFreeCellsCount() === 0) {
-      return this._throwException(FULL_BOARD_ERROR);
-    }
-
-    const [x, y] = this._getFreeRandomCoordinates();
-    this._updateHistory(this._botName, x, y);
-    this._updateBoard(x, y, this._botMoveSymbol);
+    this._updateHistory(this._currPlayer.getName(), x, y);
+    this._updateBoard(x, y, this._currPlayer.getSymbol());
+    this._switchPlayers();
   }
 
   isWinner(player) {
@@ -89,10 +88,18 @@ export default class Game {
     return horizontal || vertical || diagonal || false;
   }
 
+  _switchPlayers() {
+    if (this._currPlayer === this._player1) {
+      this._currPlayer = this._player2;
+    } else {
+      this._currPlayer = this._player1;
+    }
+  }
+
   _getSymbolForPlayer(player) {
-    return player === this._userName
-      ? this._userMoveSymbol
-      : this._botMoveSymbol;
+    return player === this._player1.getName()
+      ? this._crossSymbol
+      : this._zeroSymbol;
   }
 
   _checkCellEqual(symbol) {
@@ -104,7 +111,7 @@ export default class Game {
     this._history.push({ turn, x, y });
   }
 
-  _updateBoard(x, y, symbol = this._userMoveSymbol) {
+  _updateBoard(x, y, symbol = this._crossSymbol) {
     this._board[x][y] = symbol;
   }
 
